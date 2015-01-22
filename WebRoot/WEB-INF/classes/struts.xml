@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+"-//Apache Software Foundation//DTD Struts Configuration 2.1//EN"
+"http://struts.apache.org/dtds/struts-2.0.dtd">
+
+
+<struts>
+	<constant name="struts.server.static.browserCache" value="false" />
+	<constant name="struts.ui.theme" value="simple" />
+	<constant name="struts.devMode" value="false" />
+	<constant name="struts.i18n.encoding" value="UTF-8" />
+	<constant name="struts.configuration.xml.reload" value="true" />
+	<constant name="struts.multipart.maxSize" value="1073741824" />
+	<package name="zhbPackage" extends="struts-default">
+		<action name="getStudentList" class="dataGridDemoAction"
+			method="getStudentList"></action>
+		<action name="addStudent" class="dataGridDemoAction" method="addStudent"></action>
+		<action name="deleteStudent" class="dataGridDemoAction" method="deleteStudent"></action>
+		<action name="editStudent" class="dataGridDemoAction" method="editStudent"></action>
+		<!-- 用户管理相关 -->
+		<action name="getUserInfoList" class="userInfoAction" method="getUserInfoList"></action>
+		<action name="addUser" class="userInfoAction" method="addUser"></action>
+		<action name="deleteUser" class="userInfoAction" method="deleteUser"></action>
+		<action name="editUser" class="userInfoAction" method="editUser"></action>
+		<action name="login" class="userInfoAction" method="login"></action>
+		<action name="register" class="userInfoAction" method="register"></action>
+		<!-- bbs消息管理模块 -->
+		<action name="getBbsMessageList" class="bbsMessageAction"
+			method="getBbsMessageList"></action>
+		<action name="addBbsMessage" class="bbsMessageAction" method="addBbsMessage"></action>
+		<action name="upload" class="uploadFileAction" method="upload"></action>
+	</package>
+</struts>

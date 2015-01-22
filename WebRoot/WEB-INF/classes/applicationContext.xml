@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+	http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+	<!-- Referenced file contains errors (http://www.springframework.org/schema/beans/spring-beans-3.0.xsd). 
+		For more information, right click on the message in the Problems View and 
+		select "Show Details..." 解决办法是打开Preferences -> General -> Network Connections 
+		-> Cache ,然后删除里面的缓存信息. -->
+	<!-- 引入datasource配置文件 -->
+	<context:property-placeholder location="classpath:datasource.properties" />
+	<!--创建mysql jdbc数据源 -->
+	<bean id="c3p0dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${jdbc.mysql.driver}" />
+		<property name="jdbcUrl" value="${jdbc.mysql.url}" />
+		<property name="user" value="${jdbc.mysql.username}" />
+		<property name="password" value="${jdbc.mysql.password}" />
+		<property name="testConnectionOnCheckin" value="true" />
+		<property name="testConnectionOnCheckout" value="true" />
+	</bean>
+	<!-- 创建MysqlSessionFactory -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="c3p0dataSource" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.autoReconnect">true</prop>
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="current_session_context_class">thread</prop>
+			</props>
+		</property>
+		<property name="mappingResources">
+			<list>
+				<value>edu/njupt/zhb/model/Userinfo.hbm.xml</value>
+				<value>edu/njupt/zhb/model/Bbscomment.hbm.xml</value>
+				<value>edu/njupt/zhb/model/Bbsmessage.hbm.xml</value>
+				<value>edu/njupt/zhb/model/Student.hbm.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- 配置Mysql事务 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory">
+			<ref local="sessionFactory" />
+		</property>
+	</bean>
+	<!--Mysql hibernate4必须配置为开启事务 否则 getCurrentSession()获取不到 -->
+	<bean id="transactionInterceptor"
+		class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager">
+			<ref local="transactionManager" />
+		</property>
+		<property name="transactionAttributes">
+			<props>
+				<prop key="register">PROPAGATION_REQUIRED</prop>
+				<prop key="get*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="find*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="select*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="query*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="sync*">PROPAGATION_REQUIRED</prop>
+				<prop key="finish*">PROPAGATION_REQUIRED</prop>
+				<prop key="add*">PROPAGATION_REQUIRED</prop>
+				<prop key="insert*">PROPAGATION_REQUIRED</prop>
+				<prop key="edit*">PROPAGATION_REQUIRED</prop>
+				<prop key="update*">PROPAGATION_REQUIRED</prop>
+				<prop key="save*">PROPAGATION_REQUIRED</prop>
+				<prop key="remove*">PROPAGATION_REQUIRED</prop>
+				<prop key="delete*">PROPAGATION_REQUIRED</prop>
+				<prop key="modify*">PROPAGATION_REQUIRED</prop>
+				<prop key="*">PROPAGATION_REQUIRED,-java.lang.Exception</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- autoproxy 自动创建代理 -->
+	<bean id="ProxyCreator"
+		class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+		<property name="beanNames">
+			<list>
+				<value>*Impl</value>
+			</list>
+		</property>
+		<property name="interceptorNames">
+			<list>
+				<value>transactionInterceptor</value>
+			</list>
+		</property>
+	</bean>
+	<!-- ********************************注入Mysql Dao********************************************* -->
+	<bean id="baseDao" class="edu.njupt.zhb.dao.BaseDao">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<!-- ********************************注入Services******************************** -->
+	<bean id="dataGridDemoServiceImpl" class="edu.njupt.zhb.service.impl.DataGridDemoServiceImpl">
+		<property name="baseDao" ref="baseDao"></property>
+	</bean>
+	<bean id="userInfoServiceImpl" class="edu.njupt.zhb.service.impl.UserInfoServiceImpl">
+		<property name="userBaseDao" ref="baseDao"></property>
+	</bean>
+	<bean id="bbsMessageServiceImpl" class="edu.njupt.zhb.service.impl.BbsMessageServiceImpl">
+		<property name="baseDao" ref="baseDao"></property>
+	</bean>
+	<!-- ********************************注入Action******************************** -->
+	<bean id="dataGridDemoAction" class="edu.njupt.zhb.action.DataGridDemoAction"
+		scope="prototype">
+		<property name="dataGridDemoService" ref="dataGridDemoServiceImpl"></property>
+	</bean>
+	<bean id="userInfoAction" class="edu.njupt.zhb.action.UserInfoAction"
+		scope="prototype">
+		<property name="userInfoService" ref="userInfoServiceImpl"></property>
+	</bean>
+	<bean id="bbsMessageAction" class="edu.njupt.zhb.action.BbsMessageAction"
+		scope="prototype">
+		<property name="bbsMessageService" ref="bbsMessageServiceImpl"></property>
+	</bean>
+	<bean id="uploadFileAction" class="edu.njupt.zhb.action.UploadFileAction"
+		scope="prototype">
+	</bean>
+</beans>
+
+
